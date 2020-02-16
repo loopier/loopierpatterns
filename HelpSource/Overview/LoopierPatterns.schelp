@@ -1,0 +1,11 @@
+title:: LoopierPatterns
+summary:: An overview of Loopier's extra patterns.
+categories:: Streams-Patterns-Events>Patterns>List
+
+section::Classes
+
+definitionList::
+## link::Classes/Pchoose:: || (random sequence from a list)
+## link::Classes/Prrand:: || (random sequence from a range)
+::
+

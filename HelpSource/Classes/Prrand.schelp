@@ -1,0 +1,46 @@
+TITLE:: Prrand
+summary:: sequencially embed values randomly chosen from a list
+categories:: Streams-Patterns-Events>Patterns>List
+related:: Classes/Pchoose
+
+DESCRIPTION::
+Fill a pattern with random values in the range strong::minVal:: to strong::maxVal::.
+
+It's a pattern version of strong::Array.rand::, but since strong::Prand:: already exists had to rename it.
+
+CLASSMETHODS::
+
+METHOD:: new
+(describe method here)
+
+ARGUMENT:: size
+Number of values in the array.
+
+ARGUMENT:: minVal
+Minimum value.
+
+ARGUMENT:: maxVal
+Maximum value.
+
+ARGUMENT:: repeats
+Number of times the pattern will be repeated.
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+//
+(
+p = Prrand(4, 0, 7).asStream;
+5.do { p.next.postln };
+)
+// equivalent to
+p = Pseq(Array.rand(4, 0, 7).asStream;
+
+// with sound
+Pdef(\a, Pbind(\degree, Pn(Prrand(4, -7, 7, 4)).trace, \dur, 0.25)).play
+
+::

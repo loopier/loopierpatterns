@@ -1,0 +1,17 @@
+(
+name: "LoopierPatterns",
+summary: "Extra patterns.",
+version: "1.0.0",
+schelp: "LoopierPatterns",
+//helpdoc: "LoopeierPatternsOverview.html",
+// dependencies: ["Bjorkland", "Canvas3D", "cruciallib@tags/4.1.4"],
+// isCompatible: True,
+author: "Roger Pibernat",
+// organisation: ,
+// country: ,
+// since: ,
+// ext_dependancy: , // external software description (PD, processing, OF, ...)
+license: "GPL",
+copyright: "Roger Pibernat 2019"
+)
+

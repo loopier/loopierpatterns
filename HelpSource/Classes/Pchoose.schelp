@@ -1,0 +1,43 @@
+TITLE:: Pchoose
+summary:: sequencially embed values randomly chosen from a list
+categories:: Streams-Patterns-Events>Patterns>List
+related:: Classes/Prrand
+
+DESCRIPTION::
+Fill a pattern with random values from strong::list::.
+
+Unlike strong::Pshuf::, which scrambles the values in the list without modifying its size, strong::Pchoose:: chooses from the values in the list and a size must be provided.
+
+CLASSMETHODS::
+
+METHOD:: new
+(describe method here)
+
+ARGUMENT:: list
+An array of possible values to choose from.  Notice that it's unlikely that all the values are in the pattern.
+
+ARGUMENT:: size
+Size of the array.  If strong::0:: then it will be the same size as the strong::list::.
+
+
+ARGUMENT:: repeats
+Number of times the pattern will be repeated.
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+//
+(
+p = Pchoose(4, [0,1,2]).asStream;
+13.do { p.next.postln };
+)
+// equivalent to
+p = Pseq(Array.fill(4, {[0,2,4].choose}).asStream;
+// hence Pchoose
+
+Pdef(\a, Pbind(\degree, Pn(Pchoose(4, [0, 2, 4, 6, 7])).trace, \dur, 0.25)).play;
+
+::
