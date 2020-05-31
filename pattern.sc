@@ -44,13 +44,21 @@
 	// 		^Pixi(anything);
 	// 	};
 	// }
-}
 
-// + Pbind {
-// 	*new { arg ... pairs;
-// 		if (pairs.size == 1 && pairs[0].isString) {
-// 			^Pixi(pairs[0]);
-// 		}
-// 	}
-//
+	pclump { arg n;
+		^Pclump(n, this);
+	}
+
+	pavaroh { arg aroh, avaroh, stepsPerOctave=12;
+		^Pavaroh(this, aroh, avaroh, stepsPerOctave);
+	}
+
+	prorate { arg proportion;
+		^Prorate(proportion, this);
+	}
+
+	pn {arg repeats=inf, key;
+		^Pn(this, repeats, key);
+	}
+}
 
