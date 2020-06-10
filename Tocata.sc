@@ -90,6 +90,20 @@ Tocata : PLbindef {
 		currentEnvironment.keys.asArray.sort.collect(_.postln);
 	}
 
+	// *harmony { arg prog, dur = 1, scale = ;
+	// 	this.new(\harmonydef, \amp, 0, \degree, Pseq(prog, inf), \dur, dur);
+	// }
+
+	*stop {
+		currentEnvironment.keysValuesDo {|k,v|
+			v.stop;
+		}
+	}
+
+	*stopAll {
+		this.stop;
+	}
+
 	controls {
 		var controls = List();
 		"% controls: ".format(instrumentName).postln;
