@@ -1,14 +1,21 @@
+// usage
+//
+
 Tocata : PLbindef {
 	var <>instrumentName;
 
 	// This will load stored synthdefs and Superdirt samples (if installed).
-	*boot { arg path, loadStoredSynths = true;
+	*new { arg path, loadStoredSynths = true;
 		path = path ? Platform.userAppSupportDir ++ "/downloaded-quarks/Dirt-Samples";
-
+		// initialize fx
+		// Pdef(\reverb, Pmono(\reverb, ...))
+		Ndef(\reverb, {GVerb.ar(In.ar())})
 	}
 
-	*new { arg key, instrument;
+	*instrument { arg key, instrument;
 		instrument = instrument ? key;
+		instrument.debug("instrument");
+		key.debug("key");
 		^super.new(key, \instrument, instrument);
 	}
 
@@ -21,8 +28,22 @@ Tocata : PLbindef {
 	}
 
 	*sample{ arg key, sound, channels=2;
-		sound = currentEnvironment[sound] ? currentEnvironment[key];
-		^super.new(key, \type, \sample, \channels, channels, \sound, sound, \n, 0);
+		// sound = currentEnvironment[sound] ? currentEnvironment[key];
+		^super.new(key, \type, \sample, \sound, sound, \channels, channels, \n, 0);
+	}
+
+	*midi { arg key, midiout, channel=0;
+		^super.new(key, \type, \midi, \midiout, midiout, \chan, channel);
+	}
+
+	// use tocata as superdirt
+	*dirt { arg key, sound;
+		SuperDirt.default = ~dirt;
+		^super.new(key, \type, \dirt, \s, sound, \n, 0);
+	}
+
+	*tidal { arg key, sound;
+		this.dirt(key,sound);
 	}
 
 	// list all available synths
@@ -78,5 +99,5 @@ Tocata : PLbindef {
 		controls.collect(_.postln);
 	}
 
-
 }
+
