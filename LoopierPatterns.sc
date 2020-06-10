@@ -40,6 +40,29 @@ Prrand : Pchoose {
 	}
 }
 
+// Cycles over a list of values, shifting them a number positions every cycle.
+Protate : ListPattern {
+	var <> shift;
+
+	*new { arg list, shift = 1, repeats = inf;
+		^super.newCopyArgs(list, repeats, shift);
+	}
+
+	embedInStream { arg inval;
+		var item, stream;
+		var localList = list;
+
+		repeats.value(inval).do({ arg j;
+			localList.size.do({ arg i;
+				item = localList.wrapAt(i);
+				inval = item.embedInStream(inval);
+			});
+			localList = localList.rotate(shift);
+		});
+		^inval;
+	}
+}
+
 // Arvo Pärt's Tintinnabuli M-Voice
 // Pmvoice {
 // 	var <>note, <>scale, <>mode, <>tonic;
