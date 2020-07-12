@@ -1,4 +1,4 @@
-// A Pbind that uses strings to generate patterns.
+// A Pbind that uses ixilang-like strings to generate patterns in a TidalCycles-ish way.
 Pixi : Pbind {
 	classvar ops;
 	classvar letters = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
