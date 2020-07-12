@@ -60,5 +60,9 @@
 	pn {arg repeats=inf, key;
 		^Pn(this, repeats, key);
 	}
+
+	pstutter {arg n;
+		^Pstutter(n, this);
+	}
 }
 
