@@ -68,6 +68,20 @@ Tocata : PLbindef {
 		this.dirt(key,sound);
 	}
 
+	// provides a harmonic progression with independent timing
+	*harmony { arg degrees = [0,4], durs = [4], quant = Quant(4);
+		if (Pdef(\harmony).isPlaying) {"Harmony pattern already playing"}{ Pdef(\harmony).play(quant: quant) };
+		Pdef(\harmony,
+			Pbind(
+				\amp, 0,
+				\degree, Pseq(degrees, inf),
+				\dur, Pseq(durs, inf)
+			).collect({|event| ~lastHarmonyEvent = event;})
+		);
+		//  to play a pbind with harmony add '+ ~harmony' to \degree.
+		~harmony = Pfunc { ~lastHarmonyEvent[\degree] };
+	}
+
 	// list all available synths
 	*synths { arg loadStoredSynths = true;
 		var names = SortedList.new;
@@ -178,7 +192,7 @@ Tocata : PLbindef {
 				mul: feedback
 			);
 			LocalOut.ar(del);
-			SelectX.ar(time, [in, del]);
+			SelectX.ar(time, [in, in + del]);
 		};
 		// if (time <= 0) {Ndef(fxname)[1] = nil};
 	}
