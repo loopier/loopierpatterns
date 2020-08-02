@@ -171,10 +171,12 @@ Tocata : PLbindef {
 		var fxname = (this.name ++ "fx").asSymbol;
 		var busname = (this.name ++ "bus").asSymbol;
 		this.out_(currentEnvironment.at(busname));
+		currentEnvironment.at(busname).debug("bus");
+
 		fxname.debug("fxname");
 		busname.debug("busname");
-		currentEnvironment.at(busname).debug("bus");
 		Ndef(fxname).debug("ndef");
+
 		^fxname;
 	}
 
@@ -200,7 +202,7 @@ Tocata : PLbindef {
 	gverb { arg amp = 0.3, room = 0.03;
 		var fxname = this.connectfx;
 		room = room.linlin(0.0, 1.0, 1, 300);
-		Ndef(fxname)[2] = \filter -> {|in| GVerb.ar(in, roomsize: room, mul:amp)};
+		Ndef(fxname)[2] = \filter -> {|in| in + GVerb.ar(in, roomsize: room, mul:amp)};
 		if (amp <= 0) {Ndef(fxname)[2] = nil};
 	}
 
