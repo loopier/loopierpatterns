@@ -24,11 +24,12 @@ Tocata : PLbindef {
 	}
 
 	*instrument { arg key, instrument;
-		this.init(key);
+		// this.init(key);
+        var ndefkey = (key ++ "proxy").asSymbol;
 		instrument = instrument ? key;
 		instrument.debug("instrument");
 		key.debug("key");
-		^super.new(key, \instrument, instrument);
+		^Ndef(ndefkey, super.new(key, \instrument, instrument));
 	}
 
 	*def { arg ... args;
@@ -40,9 +41,10 @@ Tocata : PLbindef {
 	}
 
 	*sample{ arg key, sound, channels=2;
+        var ndefkey = (key ++ "proxy").asSymbol;
 		// sound = currentEnvironment[sound] ? currentEnvironment[key];
-		this.init(key);
-		^super.new(key, \type, \sample, \sound, sound, \channels, channels, \n, 0);
+		// this.init(key);
+		^Ndef(ndefkey, super.new(key, \type, \sample, \sound, sound, \channels, channels, \n, 0));
 	}
 
 	*midi { arg key, midiout, channel=0;
@@ -51,11 +53,6 @@ Tocata : PLbindef {
 
 	*cc { arg key, midiout, channel=0;
 		^super.new(key, \type, \midi, \midiout, midiout, \chan, channel, \midicmd, \control, \ctrNum, 0, \control, 64);
-	}
-
-	*fx { arg key, fx;
-		// set 'in' to an bus out of range so it doesn't sound by default
-		currentEnvironment.add( key.asSymbol -> Ndef(key.asSymbol, fx).set(\in, 24).play);
 	}
 
 	// use tocata as superdirt
@@ -133,10 +130,6 @@ Tocata : PLbindef {
         Tocata.instruments;
     }
 
-	// *harmony { arg prog, dur = 1, scale = ;
-	// 	this.new(\harmonydef, \amp, 0, \degree, Pseq(prog, inf), \dur, dur);
-	// }
-
 	*stop {
 		currentEnvironment.keysValuesDo {|k,v|
 			v.stop;
@@ -160,74 +153,141 @@ Tocata : PLbindef {
 
 
 + PLbindefEnvironment {
+    proxyname {
+        ^(this.name ++ "proxy").asSymbol;
+    }
+
+	play { 
+        Ndef(this.proxyname).play;
+    }
+
+    stop {
+        Ndef(this.proxyname).stop;
+    }
+
 	controls {
 		this.name.debug("tocata");
 		this.instrument.debug("instrument");
 		Tocata.controls(this.instrument);
 	}
 
-	connectfx {
-		// connect Pbind out to fx Ndef in.
-		var fxname = (this.name ++ "fx").asSymbol;
-		var busname = (this.name ++ "bus").asSymbol;
-		this.out_(currentEnvironment.at(busname));
-		currentEnvironment.at(busname).debug("bus");
-
-		fxname.debug("fxname");
-		busname.debug("busname");
-		Ndef(fxname).debug("ndef");
-
-		^fxname;
-	}
-
 	delay { arg time = 0.2, feedback = 0.5;
-		var fxname = this.connectfx;
-		// Ndef(fxname)[1] = \filter -> {|in| in + CombC.ar(in, time, time, decay)};
-		Ndef(fxname)[1] = \filter -> {|in|
-			var maxdelaytime = 8;
-			var local, del;
-			local = LocalIn.ar(2) + in;
-			del = DelayN.ar(
-				local,
-				maxdelaytime: maxdelaytime,
-				delaytime: time,
-				mul: feedback
-			);
-			LocalOut.ar(del);
-			SelectX.ar(time, [in, in + del]);
-		};
-		// if (time <= 0) {Ndef(fxname)[1] = nil};
+        var proxy = Ndef(this.proxyname);
+        if (time <= 0) {
+            proxy[1] = nil;
+            proxy[10] = nil;
+        } { 
+            proxy[1] = \pset -> Pbind(\time, time, \feedback, feedback);
+            proxy[10] = \filter -> {|in|
+                var maxdelaytime = \maxdelaytime.kr(8);
+                var delaytime = \time.kr(0.2);
+                var fb = \feedback.kr(0.5);
+                var local, del;
+                local = LocalIn.ar(2) + in;
+                del = DelayN.ar(
+                    local,
+                    maxdelaytime: maxdelaytime,
+                    delaytime: delaytime,
+                    mul: fb
+                );
+                LocalOut.ar(del);
+                SelectX.ar(time, [in, in + del]);
+            };
+        };
 	}
 
-	gverb { arg amp = 0.3, room = 0.03;
-		var fxname = this.connectfx;
-		room = room.linlin(0.0, 1.0, 1, 300);
-		Ndef(fxname)[2] = \filter -> {|in| in + GVerb.ar(in, roomsize: room, mul:amp)};
-		if (amp <= 0) {Ndef(fxname)[2] = nil};
+	gverb { arg room = 0.3, size = 0.03;
+        var proxy = Ndef(this.proxyname);
+        size = size.linlin(0.0, 1.0, 1, 300);
+        if (room <= 0) {
+            proxy[2] = nil;
+            proxy[20] = nil;
+        } { 
+            proxy[2] = \pset -> Pbind(\mul, room, \size, size);
+            proxy[20] = \filter -> {|in|
+                var roomsize = \size.kr(0.03);
+                var mul = \room.kr(0.3);
+                in + GVerb.ar(in, roomsize: roomsize, mul: mul);
+            };
+        };
 	}
 
 	freeverb { arg mix = 0.33, room = 0.5;
-		var fxname = this.connectfx;
-		Ndef(fxname)[2] = \filter -> {|in| FreeVerb.ar(in, mix: mix, room: room)};
-		if (mix <= 0) {Ndef(fxname)[2] = nil};
+        var proxy = Ndef(this.proxyname);
+        if (mix <= 0) {
+            proxy[2] = nil;
+            proxy[20] = nil;
+        } { 
+            proxy[2] = \pset -> Pbind(\mix, mix, \room, room);
+            proxy[20] = \filter -> {|in|
+                var roomsize = \room.kr(0.5);
+                var mix = \mix.kr(0.33);
+                FreeVerb.ar(in, mix: mix, room: roomsize);
+            };
+        };
 	}
 
-	distort { arg distort = 0;
-		var fxname = this.connectfx;
-		Ndef(fxname)[3] = \filter -> { |in|
-			var signal, mod;
-			signal = in;
-			mod = CrossoverDistortion.ar(signal, amp: 0.2, smooth: 0.01);
-			mod = mod + (0.1 * distort * DynKlank.ar(`[[60,61,240,3000 + SinOsc.ar(62,mul: 100)],nil,[0.1, 0.1, 0.05, 0.01]], signal));
-			mod = (mod.cubed * 8).softclip * 0.5;
-			mod = SelectX.ar(distort, [signal, mod]);
+	lpf { arg cutoff = 440, rq = 0.2;
+        var proxy = Ndef(this.proxyname);
+        if (cutoff <= 0) {
+            proxy[3] = nil;
+            proxy[30] = nil;
+        } { 
+            proxy[3] = \pset -> Pbind(\cutoff, cutoff, \rq, rq);
+            proxy[30] = \filter -> {|in|
+                var cutoff = \cutoff.kr(440);
+                var rq = \rq.kr(0.2);
+                RLPF.ar(in, freq: cutoff, rq: rq);
+            };
+        };
+	}
 
-			// var abs, excess, output;
-			// abs = in.abs;
-			// excess = (abs-0.1).max(0.0).min(0.9)/0.9;
-			// //original plus sinusoidal perturbation of amount based on absolute amplitude
-			// in + (excess*(sin(excess*2pi*5)*0.5-0.5));
-		};
-		// if (distort <= 0) {Ndef(fxname)[3] = nil};
+	hpf { arg cutoff = 440, rq = 0.2;
+        var proxy = Ndef(this.proxyname);
+        if (cutoff <= 0) {
+            proxy[4] = nil;
+            proxy[40] = nil;
+        } { 
+            proxy[4] = \pset -> Pbind(\cutoff, cutoff, \rq, rq);
+            proxy[40] = \filter -> {|in|
+                var cutoff = \cutoff.kr(440);
+                var rq = \rq.kr(0.2);
+                RHPF.ar(in, freq: cutoff, rq: rq);
+            };
+        };
+	}
+    
+	bpf { arg cutoff = 440, rq = 0.2;
+        var proxy = Ndef(this.proxyname);
+        if (cutoff <= 0) {
+            proxy[5] = nil;
+            proxy[50] = nil;
+        } { 
+            proxy[5] = \pset -> Pbind(\cutoff, cutoff, \rq, rq);
+            proxy[50] = \filter -> {|in|
+                var cutoff = \cutoff.kr(440);
+                var rq = \rq.kr(0.2);
+                BPF.ar(in, freq: cutoff, rq: rq);
+            };
+        };
+	}
+
+	distort { arg distort = 0.3;
+        var proxy = Ndef(this.proxyname);
+        if (distort <= 0) {
+            proxy[6] = nil;
+            proxy[60] = nil;
+        } {
+            proxy[6] = \pset -> Pbind(\distortion, distort);
+            proxy[60] = \filter -> { |in|
+                var dist = \distortion.kr(0.3);
+                var signal, mod;
+                signal = in;
+                mod = CrossoverDistortion.ar(signal, amp: 0.2, smooth: 0.01);
+                mod = mod + (0.1 * dist * DynKlank.ar(`[[60,61,240,3000 + SinOsc.ar(62,mul: 100)],nil,[0.1, 0.1, 0.05, 0.01]], signal));
+                mod = (mod.cubed * 8).softclip * 0.5;
+                mod = SelectX.ar(dist, [signal, mod]);
+            };
+        };
 	}
 }
