@@ -1,7 +1,7 @@
 Bataca {
 	classvar <all;
 	// var <>kick, <>sn, <>ch, <>oh, <>rim, <>cym, <>bell, <>cl, <>sh, <>ht, <>mt, <>lt, <>acc;
-	var <>pattern;
+    var <>pattern;
 
     *new { arg kick=[], sn=[], ch=[], oh=[], rim=[], cym=[], bell=[], cl=[], sh=[], ht=[], mt=[], lt=[], acc=[];
 		var pat = (
@@ -76,6 +76,7 @@ Bataca {
 BatacaPlayer {
 	// var kick, sn, ch, oh, rim, cym, bell, cl, sh, ht, mt, lt;
     var <>sounds;
+    var <>bataca;
 
     *new { arg kick, sn, ch, oh, rim, cym, bell, cl, sh, ht, mt, lt;
         var sounds = (
@@ -114,26 +115,21 @@ BatacaPlayer {
         sounds.do{|it| it.source.stop};
     }
 
-    pattern { arg bataca;
-        // "----- TODO!!!".postln;
-		// sounds.kick.rhythm_(bataca.kick.pseq(inf));
-		// sounds.sn.rhythm_(bataca.sn.pseq(inf));
-		// sounds.ch.rhythm_(bataca.ch.pseq(inf));
-		// sounds.oh.rhythm_(bataca.oh.pseq(inf));
-		// sounds.rim.rhythm_(bataca.rim.pseq(inf));
-		// sounds.cym.rhythm_(bataca.cym.pseq(inf));
-		// sounds.bell.rhythm_(bataca.bell.pseq(inf));
-		// sounds.cl.rhythm_(bataca.cl.pseq(inf));
-		// sounds.sh.rhythm_(bataca.sh.pseq(inf));
-		// sounds.ht.rhythm_(bataca.ht.pseq(inf));
-		// sounds.mt.rhythm_(bataca.mt.pseq(inf));
-		// sounds.lt.rhythm_(bataca.lt.pseq(inf));
+    pattern_ { arg batacapattern;
+        this.bataca = batacapattern;
 		sounds.do{|it|
 			var instrument = it.source.key;
 			var tocata = currentEnvironment[instrument];
-		tocata.rhythm_(bataca.at(instrument).pseq(inf))
+            it.key.debug("it");
+            instrument.debug("instrument");
+            tocata.key.debug("tocata");
+            tocata.rhythm_(this.bataca.at(instrument).pseq(inf))
 		}
-        ^bataca;
+        ^this.bataca;
+    }
+    
+    pattern {
+        ^this.bataca.pattern;
     }
 }
 
