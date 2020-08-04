@@ -1,23 +1,24 @@
 Bataca {
 	classvar <all;
-    var <>kick, <>sn, <>ch, <>oh, <>rim, <>cym, <>bell, <>clap, <>sh, <>ht, <>mt, <>lt, <>acc;
+	// var <>kick, <>sn, <>ch, <>oh, <>rim, <>cym, <>bell, <>cl, <>sh, <>ht, <>mt, <>lt, <>acc;
+	var <>pattern;
 
-    *new { arg kick=[], sn=[], ch=[], oh=[], rim=[], cym=[], bell=[], clap=[], sh=[], ht=[], mt=[], lt=[], acc=[];
-		^super.newCopyArgs(
-            Bataca.asArray(kick),
-            Bataca.asArray(sn),
-            Bataca.asArray(ch),
-            Bataca.asArray(oh),
-            Bataca.asArray(rim),
-            Bataca.asArray(cym),
-            Bataca.asArray(bell),
-            Bataca.asArray(clap),
-            Bataca.asArray(sh),
-            Bataca.asArray(ht),
-            Bataca.asArray(mt),
-            Bataca.asArray(lt),
-            Bataca.asArray(lt),
-		)
+    *new { arg kick=[], sn=[], ch=[], oh=[], rim=[], cym=[], bell=[], cl=[], sh=[], ht=[], mt=[], lt=[], acc=[];
+		var pat = (
+            kick: Bataca.asArray(kick),
+            sn: Bataca.asArray(sn),
+            ch: Bataca.asArray(ch),
+            oh: Bataca.asArray(oh),
+            rim: Bataca.asArray(rim),
+            cym: Bataca.asArray(cym),
+            bell: Bataca.asArray(bell),
+            cl: Bataca.asArray(cl),
+            sh: Bataca.asArray(sh),
+            ht: Bataca.asArray(ht),
+            mt: Bataca.asArray(mt),
+            lt: Bataca.asArray(lt),
+		);
+		^super.newCopyArgs(pat);
     }
 
 	*at { |key|
@@ -32,8 +33,6 @@ Bataca {
 
 	*doesNotUnderstand { |selector, args|
 		var pattern = this.newFromKey(selector, args).deepCopy;
-        selector.debug("selector");
-        args.debug("args");
 		^pattern ?? { super.doesNotUnderstand(selector, args) };
 	}
 
@@ -57,13 +56,28 @@ Bataca {
         }
         ^arr;
     }
+
+	newFromKey { |key|
+		var pattern = this.pattern.at(key).deepCopy;
+		pattern ?? { ("Unknown pattern " ++ key.asString).warn; ^nil };
+		^pattern;
+	}
+
+	doesNotUnderstand { |selector, args|
+		var pattern = this.newFromKey(selector, args).deepCopy;
+		^pattern ?? { super.doesNotUnderstand(selector, args) };
+	}
+
+	at { arg key;
+		^pattern.at(key);
+	}
 }
 
 BatacaPlayer {
-	// var kick, sn, ch, oh, rim, cym, bell, clap, sh, ht, mt, lt;
+	// var kick, sn, ch, oh, rim, cym, bell, cl, sh, ht, mt, lt;
     var <>sounds;
 
-    *new { arg kick, sn, ch, oh, rim, cym, bell, clap, sh, ht, mt, lt;
+    *new { arg kick, sn, ch, oh, rim, cym, bell, cl, sh, ht, mt, lt;
         var sounds = (
             \kick: kick,
             \sn: sn,
@@ -72,7 +86,7 @@ BatacaPlayer {
             \rim: rim,
             \cym: cym,
             \bell: bell,
-            \clap: clap,
+            \cl: cl,
             \sh: sh,
             \ht: ht,
             \mt: mt,
@@ -83,7 +97,12 @@ BatacaPlayer {
 
 	play {
         // plays the Ndef
-        sounds.do{|it| it.play};
+        sounds.do{|it|
+			var tocata = currentEnvironment[it.source.key];
+			tocata.dur_(1/4);
+			tocata.legato_(4);
+			it.play.quant_(16);
+		};
     }
 
 	stop {
@@ -97,18 +116,23 @@ BatacaPlayer {
 
     pattern { arg bataca;
         // "----- TODO!!!".postln;
-        sounds.kick.rhythm_(bataca.kick.pseq(inf));
-        sounds.sn.rhythm_(bataca.sn.pseq(inf));
-        sounds.ch.rhythm_(bataca.ch.pseq(inf));
-        sounds.oh.rhythm_(bataca.oh.pseq(inf));
-        sounds.rim.rhythm_(bataca.rim.pseq(inf));
-        sounds.cym.rhythm_(bataca.cym.pseq(inf));
-        sounds.bell.rhythm_(bataca.bell.pseq(inf));
-        sounds.clap.rhythm_(bataca.clap.pseq(inf));
-        sounds.sh.rhythm_(bataca.sh.pseq(inf));
-        sounds.ht.rhythm_(bataca.ht.pseq(inf));
-        sounds.mt.rhythm_(bataca.mt.pseq(inf));
-        sounds.lt.rhythm_(bataca.lt.pseq(inf));
+		// sounds.kick.rhythm_(bataca.kick.pseq(inf));
+		// sounds.sn.rhythm_(bataca.sn.pseq(inf));
+		// sounds.ch.rhythm_(bataca.ch.pseq(inf));
+		// sounds.oh.rhythm_(bataca.oh.pseq(inf));
+		// sounds.rim.rhythm_(bataca.rim.pseq(inf));
+		// sounds.cym.rhythm_(bataca.cym.pseq(inf));
+		// sounds.bell.rhythm_(bataca.bell.pseq(inf));
+		// sounds.cl.rhythm_(bataca.cl.pseq(inf));
+		// sounds.sh.rhythm_(bataca.sh.pseq(inf));
+		// sounds.ht.rhythm_(bataca.ht.pseq(inf));
+		// sounds.mt.rhythm_(bataca.mt.pseq(inf));
+		// sounds.lt.rhythm_(bataca.lt.pseq(inf));
+		sounds.do{|it|
+			var instrument = it.source.key;
+			var tocata = currentEnvironment[instrument];
+		tocata.rhythm_(bataca.at(instrument).pseq(inf))
+		}
         ^bataca;
     }
 }
@@ -244,14 +268,14 @@ BatacaPlayer {
             kick: [1,5,9,13],
             ch: [1,2,4,5,6,8,9,10,12,13,14,16],
             oh: [3,6,11,15],
-            clap: [5,13],
+            cl: [5,13],
             cym: [3,7,11,15],
         ),
         \frenchhouse -> Bataca(
             kick: [1,5,9,13],
             ch: (1..16),
             oh: [2,4,6,8,10,12,14,16],
-            clap: [5,13],
+            cl: [5,13],
             sh: [1,2,3,5,7,8,9,10,11,13,15,16],
         ),
         \dirtyhouse -> Bataca(
@@ -260,18 +284,18 @@ BatacaPlayer {
             sn: [5,13],
             ch: [11,16],
             oh: [3,11,15],
-            clap: [3,5,9,11,13],
+            cl: [3,5,9,11,13],
         ),
         \deephouse -> Bataca(
             kick: [1,5,9,13],
             ch: [2,8,10],
             oh: [3,7,11,15],
-            clap: [5,13],
+            cl: [5,13],
         ),
         \deeperhouse -> Bataca(
             kick: [1,5,9,13],
             oh: [3,7,11,12,15],
-            clap: [2,10],
+            cl: [2,10],
             sh: [4,9],
             mt: [3,8,11],
         ),
@@ -279,20 +303,20 @@ BatacaPlayer {
             kick: [1,5,9,13],
             ch: [1,5,9,13],
             oh: [3,4,7,8,10,11,13],
-            clap: [5,13],
+            cl: [5,13],
             sh: (1..16),
         ),
         \footworka -> Bataca(
             kick: [1,4,7,9,12,15],
             ch: [3,11],
             rim: (1..16),
-            clap: [13],
+            cl: [13],
         ),
         \footworkb -> Bataca(
             kick: [1,4,7,9,12,15],
             ch: [3,7,8,11,15],
             rim: (1..16),
-            clap: [13],
+            cl: [13],
         ),
         // funk
         \amena -> Bataca(
@@ -372,7 +396,7 @@ BatacaPlayer {
         //     rim: [0],
         //     cym: [0],
         //     bell: [0],
-        //     clap: [0],
+        //     cl: [0],
         //     sh: [0],
         //     ht: [0],
         //     mt: [0],
