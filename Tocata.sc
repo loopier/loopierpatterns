@@ -5,23 +5,23 @@ Tocata : PLbindef {
 	var <>instrumentName;
 
 	// This will load stored synthdefs and Superdirt samples (if installed).
-	*new { arg path, loadStoredSynths = true;
-		path = path ? Platform.userAppSupportDir ++ "/downloaded-quarks/Dirt-Samples";
-		// initialize fx
-		// Pdef(\reverb, Pmono(\reverb, ...))
-		Ndef(\reverb, {GVerb.ar(In.ar())})
-	}
+	// *new { arg path, loadStoredSynths = true;
+	// 	path = path ? Platform.userAppSupportDir ++ "/downloaded-quarks/Dirt-Samples";
+	// 	// initialize fx
+	// 	// Pdef(\reverb, Pmono(\reverb, ...))
+	// 	Ndef(\reverb, {GVerb.ar(In.ar())})
+	// }
 
-	*init { arg key;
-		var busname =(key++"bus").asSymbol;
-		var fxname =(key++"fx").asSymbol;
-		var bus = Bus.audio(Server.default, 2);
-		currentEnvironment.add(busname -> bus);
-		Ndef(fxname, {In.ar(currentEnvironment.at(busname),2)}).play;
-		[fxname].debug("init");
-		[bus].debug("bus");
-		[currentEnvironment.at(busname)].debug("busname");
-	}
+	// *init { arg key;
+	// 	var busname =(key++"bus").asSymbol;
+	// 	var fxname =(key++"fx").asSymbol;
+	// 	var bus = Bus.audio(Server.default, 2);
+	// 	currentEnvironment.add(busname -> bus);
+	// 	Ndef(fxname, {In.ar(currentEnvironment.at(busname),2)}).play;
+	// 	[fxname].debug("init");
+	// 	[bus].debug("bus");
+	// 	[currentEnvironment.at(busname)].debug("busname");
+	// }
 
 	*instrument { arg key, instrument;
 		// this.init(key);
@@ -157,13 +157,20 @@ Tocata : PLbindef {
         ^(this.name ++ "proxy").asSymbol;
     }
 
-	play { 
+	play {
         Ndef(this.proxyname).play;
     }
 
     stop {
-        Ndef(this.proxyname).stop;
+        // Ndef(this.proxyname).stop;
+        // play a rest and stop
+        this.rhythm_([\r].pseq(1));
     }
+
+    fadeTime { arg time;
+        Ndef(this.proxyname).fadeTime_(time);
+    }
+
 
 	controls {
 		this.name.debug("tocata");
@@ -173,10 +180,12 @@ Tocata : PLbindef {
 
 	delay { arg time = 0.2, feedback = 0.5;
         var proxy = Ndef(this.proxyname);
-        if (time <= 0) {
-            proxy[1] = nil;
-            proxy[10] = nil;
-        } { 
+        if (time.isNumber) { 
+            if (time <= 0) {
+                proxy[1] = nil;
+                proxy[10] = nil;
+            }
+        } {
             proxy[1] = \pset -> Pbind(\time, time, \feedback, feedback);
             proxy[10] = \filter -> {|in|
                 var maxdelaytime = \maxdelaytime.kr(8);
@@ -199,10 +208,13 @@ Tocata : PLbindef {
 	gverb { arg room = 0.3, size = 0.03;
         var proxy = Ndef(this.proxyname);
         size = size.linlin(0.0, 1.0, 1, 300);
+        if (room.isNumber) { 
         if (room <= 0) {
             proxy[2] = nil;
             proxy[20] = nil;
-        } { 
+            
+            }
+        } {
             proxy[2] = \pset -> Pbind(\mul, room, \size, size);
             proxy[20] = \filter -> {|in|
                 var roomsize = \size.kr(0.03);
@@ -214,10 +226,13 @@ Tocata : PLbindef {
 
 	freeverb { arg mix = 0.33, room = 0.5;
         var proxy = Ndef(this.proxyname);
+        if (mix.isNumber) { 
         if (mix <= 0) {
             proxy[2] = nil;
             proxy[20] = nil;
-        } { 
+            
+            }
+        } {
             proxy[2] = \pset -> Pbind(\mix, mix, \room, room);
             proxy[20] = \filter -> {|in|
                 var roomsize = \room.kr(0.5);
@@ -229,54 +244,70 @@ Tocata : PLbindef {
 
 	lpf { arg cutoff = 440, rq = 0.2;
         var proxy = Ndef(this.proxyname);
-        if (cutoff <= 0) {
-            proxy[3] = nil;
-            proxy[30] = nil;
-        } { 
+		if (cutoff.isNumber) {
+			// cannot be in the same statement because if 'cutoff' is 
+            // a pattern it breaks
+			if (cutoff <= 0){
+				proxy[3] = nil;
+				proxy[30] = nil;
+			}
+        } {
             proxy[3] = \pset -> Pbind(\cutoff, cutoff, \rq, rq);
             proxy[30] = \filter -> {|in|
-                var cutoff = \cutoff.kr(440);
-                var rq = \rq.kr(0.2);
-                RLPF.ar(in, freq: cutoff, rq: rq);
+                var freq = \cutoff.kr(440);
+                var resonance = \rq.kr(0.2);
+                RLPF.ar(in, freq: freq, rq: resonance);
             };
         };
 	}
 
 	hpf { arg cutoff = 440, rq = 0.2;
         var proxy = Ndef(this.proxyname);
-        if (cutoff <= 0) {
-            proxy[4] = nil;
-            proxy[40] = nil;
-        } { 
+		if (cutoff.isNumber) {
+			// cannot be in the same statement because if 'cutoff' is 
+            // a pattern it breaks
+			if (cutoff <= 0){
+				proxy[4] = nil;
+				proxy[40] = nil;
+			}
+        } {
             proxy[4] = \pset -> Pbind(\cutoff, cutoff, \rq, rq);
             proxy[40] = \filter -> {|in|
-                var cutoff = \cutoff.kr(440);
-                var rq = \rq.kr(0.2);
-                RHPF.ar(in, freq: cutoff, rq: rq);
+                var freq = \cutoff.kr(440);
+                var resonance = \rq.kr(0.2);
+                RHPF.ar(in, freq: freq, rq: resonance);
             };
         };
 	}
-    
+
 	bpf { arg cutoff = 440, rq = 0.2;
         var proxy = Ndef(this.proxyname);
-        if (cutoff <= 0) {
-            proxy[5] = nil;
-            proxy[50] = nil;
-        } { 
+		if (cutoff.isNumber) {
+			// cannot be in the same statement because if 'cutoff' is 
+            // a pattern it breaks
+			if (cutoff <= 0){
+				proxy[5] = nil;
+				proxy[50] = nil;
+			}
+        } {
             proxy[5] = \pset -> Pbind(\cutoff, cutoff, \rq, rq);
             proxy[50] = \filter -> {|in|
-                var cutoff = \cutoff.kr(440);
-                var rq = \rq.kr(0.2);
-                BPF.ar(in, freq: cutoff, rq: rq);
+                var freq = \cutoff.kr(440);
+                var resonance = \rq.kr(0.2);
+                BPF.ar(in, freq: freq, rq: resonance);
             };
         };
 	}
 
 	distort { arg distort = 0.3;
         var proxy = Ndef(this.proxyname);
-        if (distort <= 0) {
-            proxy[6] = nil;
-            proxy[60] = nil;
+        if (distort.isNumber){ 
+			// cannot be in the same statement because if 'distort' is 
+            // a pattern it breaks
+            if (distort <= 0) {
+                proxy[6] = nil;
+                proxy[60] = nil;
+            }
         } {
             proxy[6] = \pset -> Pbind(\distortion, distort);
             proxy[60] = \filter -> { |in|
@@ -290,4 +321,33 @@ Tocata : PLbindef {
             };
         };
 	}
+
+    // add filters like you would do with Ndef:
+    // Ndef(\a)[x] = \filter -> { ... }
+    fx1 { arg func;
+        var proxy = Ndef(this.proxyname);
+        if (func.isNil) { 
+            proxy[100] = nil 
+        }{ 
+            proxy[100] = \filter -> func;
+        }    
+    }
+
+    fx2 { arg func;
+        var proxy = Ndef(this.proxyname);
+        if (func.isNil) { 
+            proxy[200] = nil 
+        }{ 
+            proxy[200] = \filter -> func;
+        }    
+    }
+
+    fx1 { arg func;
+        var proxy = Ndef(this.proxyname);
+        if (func.isNil) { 
+            proxy[300] = nil 
+        }{ 
+            proxy[300] = \filter -> func;
+        }    
+    }
 }
