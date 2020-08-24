@@ -48,18 +48,18 @@ Tocata : PLbindef {
 
     // provides a harmonic progression with independent timing
     *harmony { arg degrees = [0,4], durs = [4], quant = Quant(4);
-        // if (Pdef(\harmony).isPlaying) {"Harmony pattern already playing"}{ Pdef(\harmony).play(quant: quant) };
-        // if (degrees.isArray) { degrees = Pseq(degrees, inf); };
-        // if (durs.isArray) { durs = Pseq(durs, inf); };
-        // Pdef(\harmony,
-        //     Pbind(
-        //         \amp, 0,
-        //         \degree, degrees,
-        //         \dur, durs,
-        //     ).collect({|event| ~lastHarmonyEvent = event;})
-        // );
-        // //  to play a pbind with harmony add '+ ~harmony' to \degree.
-        // ~harmony = Pfunc { ~lastHarmonyEvent[\degree] };
+        if (Pdef(\harmony).isPlaying) {"Harmony pattern already playing"}{ Pdef(\harmony).play(quant: quant) };
+        if (degrees.isArray) { degrees = Pseq(degrees, inf); };
+        if (durs.isArray) { durs = Pseq(durs, inf); };
+        Pdef(\harmony,
+            Pbind(
+                \amp, 0,
+                \degree, degrees,
+                \dur, durs,
+            ).collect({|event| ~lastHarmonyEvent = event;})
+        );
+        //  to play a pbind with harmony add '+ ~harmony' to \degree.
+        ~harmony = Pfunc { ~lastHarmonyEvent[\degree] };
     }
 
     // list all available synths
@@ -102,7 +102,7 @@ Tocata : PLbindef {
     }
 
     // lists available instruments (variables)
-    *instruments {
+    *list {
         // currentEnvironment.keys.asArray.sort.collect(_.postln);
         currentEnvironment.keys.asArray.sort.do{|k|
             "% (%)".format(k, currentEnvironment[k].size).postln;
@@ -110,17 +110,11 @@ Tocata : PLbindef {
     }
 
     *samples {
-        Tocata.instruments;
+        Tocata.list;
     }
 
-    *all {
-        var tocatas = List.new;
-        currentEnvironment.do{|i|
-            if (i.class === PLbindefEnvironment) {
-                tocatas.add(i);
-            }
-        };
-        ^tocatas;
+    *instruments {
+        Tocata.list;
     }
 
     *stop {
@@ -175,7 +169,7 @@ Bataca {
         sounds.do{|it|
 			var tocata = currentEnvironment[it.source.key];
 			tocata.dur_(1/4);
-			tocata.legato_(4);
+			// tocata.legato_(4);
 			it.play.quant_(quant);
 		};
     }
@@ -209,7 +203,7 @@ Bataca {
         ^this.drumpattern.pattern;
     }
 
-    players {
+    all {
         var players = List.new;
         sounds.do{|sound| players.add(currentEnvironment[sound.source.key])};
         ^players;
@@ -223,13 +217,11 @@ Bataca {
 
     play {
         Ndef(this.proxyname).play;
-        // this.isPlaying_([1].pseq(inf));
+        this.playing_(1);
     }
 
     stop {
         Ndef(this.proxyname).stop;
-        // play a rest and stop
-        // this.isPlaying_([\r].pseq(1));
     }
 
     fadeTime { arg time;
