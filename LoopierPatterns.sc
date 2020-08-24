@@ -1,3 +1,12 @@
+// Cycles over a list of values, then it stays on the last value indefinately.
+// Same as Pseq([0, Pseq([1],inf)])
+Pline : Pseq {
+	*new { arg list, repeats=1;
+		list[list.size - 1] = Pseq([list[list.size - 1]],inf);
+		^super.newCopyArgs(list, 1, 0);
+	}
+}
+
 // Random sequence pattern.
 // Generates a random sequence from the given list.
 Pchoose : Pseq {
