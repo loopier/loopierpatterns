@@ -2,7 +2,9 @@
 // Same as Pseq([0, Pseq([1],inf)])
 Pline : Pseq {
 	*new { arg list, repeats=1;
-		list[list.size - 1] = Pseq([list[list.size - 1]],inf);
+		// list[list.size - 1] = Pseq([list[list.size - 1]],inf);
+		var last = list[list.size - 1];
+		list = [Pseq(list, repeats), Pseq([last], inf)];
 		^super.newCopyArgs(list, 1, 0);
 	}
 }
