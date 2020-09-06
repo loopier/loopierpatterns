@@ -114,7 +114,16 @@ Tocata : PLbindef {
     }
 
     *instruments {
-        Tocata.list;
+		// Tocata.list;
+		^Tocata.allInstruments;
+	}
+
+	*allInstruments {
+		var sourceEnvirs = List();
+        super.all.do{|x|
+			sourceEnvirs.add(x.sourceEnvir);
+		};
+		^sourceEnvirs;
     }
 
     *stop {
@@ -180,7 +189,7 @@ Bataca {
         // It's done like this because if we stop the Ndef all
         // effects will be stopped immediately and we want them
         // to keep going until they are done (e.g. reverb)
-        sounds.do{|it| 
+        sounds.do{|it|
             it.stop;
         };
     }
@@ -198,7 +207,7 @@ Bataca {
 		}
         ^this.drumpattern;
     }
-    
+
     pattern {
         ^this.drumpattern.pattern;
     }
@@ -235,8 +244,23 @@ Bataca {
         Tocata.controls(this.instrument);
     }
 
+    fade { arg steps = 10, from = 0.0, to = 0.3;
+        var list = Array.interpolation(steps, from, to);
+		var last = list[list.size - 1];
+        list.debug("fade");
+		this.amp_(Pseq([Pseq(list), Pseq([last], inf)]));
+    }
+
+    fadein { arg steps = 10, to = 0.3;
+        this.fade(steps, 0.0, to);
+    }
+
+    fadeout { arg steps = 10, from = 0.3;
+        this.fade(steps, from, 0.0);
+    }
+
     // Creates an effect with patternable parameters
-    // This is an abstraction that allows for specific fx and filter codes below to 
+    // This is an abstraction that allows for specific fx and filter codes below to
     // be shorter and cleaner.
     // \param    index    Number    Index of the slot in the Ndef \param    function Function  Filter function
     // \param    args     Array     Pbind pairs.  If first argument is <= the effect is cancelled
@@ -249,8 +273,8 @@ Bataca {
         function.debug("func");
         args.debug("args");
         first.debug("first");
-        // one-liner breaks the code: if (first.isNumber && first <= 0) 
-        if (first.isNumber) { 
+        // one-liner breaks the code: if (first.isNumber && first <= 0)
+        if (first.isNumber) {
             first.isNumber.debug("first is number");
             if (first <= 0) {
                 proxy[index] = nil;
@@ -260,7 +284,7 @@ Bataca {
                 proxy[index * 10] = \filter -> function;
             };
         } {
-            if (first.isFunction) { 
+            if (first.isFunction) {
                 proxy[index] = \pset -> first;
             } {
                 proxy[index] = \pset -> Pbind(*args);
@@ -286,7 +310,7 @@ Bataca {
                      // SelectX.ar(time, [in, in + del]);
                      in + del;
                  };
-                 
+
         this.addFx(index: 1, function: filterfunc, args: [time:time, feedback: feedback, dur: dur]);
     }
 
@@ -332,7 +356,7 @@ Bataca {
             var resonance = \rq.kr(0.2);
             RHPF.ar(in, freq: freq, rq: resonance);
         };
-        this.addFx(index: 4, function: filterfunc, args: [cutoff:cutoff, rq: rq, dur: dur]);    
+        this.addFx(index: 4, function: filterfunc, args: [cutoff:cutoff, rq: rq, dur: dur]);
     }
 
     distort { arg distort = 0.3, dur = 1;
@@ -345,36 +369,36 @@ Bataca {
                     mod = (mod.cubed * 8).softclip * 0.5;
                     mod = SelectX.ar(dist, [signal, mod]);
                 };
-        this.addFx(index: 4, function: filterfunc, args: [distort: distort, dur: dur]);    
+        this.addFx(index: 4, function: filterfunc, args: [distort: distort, dur: dur]);
     }
 
     // add filters like you would do with Ndef:
     // Ndef(\a)[x] = \filter -> { ... }
     fx1 { arg func;
         var proxy = Ndef(this.proxyname);
-        if (func.isNil) { 
-            proxy[100] = nil 
-        }{ 
+        if (func.isNil) {
+            proxy[100] = nil
+        }{
             proxy[100] = \filter -> func;
-        }    
+        }
     }
 
     fx2 { arg func;
         var proxy = Ndef(this.proxyname);
-        if (func.isNil) { 
-            proxy[200] = nil 
-        }{ 
+        if (func.isNil) {
+            proxy[200] = nil
+        }{
             proxy[200] = \filter -> func;
-        }    
+        }
     }
 
     fx3 { arg func;
         var proxy = Ndef(this.proxyname);
-        if (func.isNil) { 
-            proxy[300] = nil 
-        }{ 
+        if (func.isNil) {
+            proxy[300] = nil
+        }{
             proxy[300] = \filter -> func;
-        }    
+        }
     }
 }
 
