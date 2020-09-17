@@ -244,6 +244,7 @@ Bataca {
         Tocata.controls(this.instrument);
     }
 
+	// Set motifs quickly with degree/dur pairs
 	motif { arg motif=(degree: 0, dur: 1);
 		motif.debug("motif");
 		this.degree_(motif[\degree]).dur_(motif[\dur]);
