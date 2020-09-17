@@ -244,6 +244,11 @@ Bataca {
         Tocata.controls(this.instrument);
     }
 
+	motif { arg motif=(degree: 0, dur: 1);
+		motif.debug("motif");
+		this.degree_(motif[\degree]).dur_(motif[\dur]);
+	}
+
     fade { arg steps = 10, from = 0.0, to = 0.3;
         var list = Array.interpolation(steps, from, to);
 		var last = list[list.size - 1];
