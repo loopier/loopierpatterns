@@ -1,5 +1,8 @@
 // usage
-//
+// To use with Ppar:
+// Tocata.synth(\acid, \acid);
+// Tocata.synth(\bass, \fmbass);
+// Pdef(\a, Ptpar([0.5, ~acid.plbindef, 0, ~bass.plbindef])).play
 
 Tocata : PLbindef {
     var <>instrumentName;
@@ -247,7 +250,7 @@ Bataca {
 	// Set motifs quickly with degree/dur pairs
 	motif { arg motif=(degree: 0, dur: 1);
 		motif.debug("motif");
-		this.degree_(motif[\degree]).dur_(motif[\dur]);
+		this.degree_(motif[\degree].pseq(inf)).dur_(motif[\dur].pseq(inf));
 	}
 
     fade { arg steps = 10, from = 0.0, to = 0.3;
