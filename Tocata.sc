@@ -135,16 +135,15 @@ Tocata : PLbindef {
     //                                               is the number of beats before the instrument
     //                                               starts to play (may be float for off-beat values)
     // Example: Tocata.play(~acid, [0.5, ~bass]) will play ~acid on the first beat and ~bass on beat 1.5
+    // Warning!:  For an instrument to keep it's offset while modified outside this function, any
+    //            dynamically created variable that is modified must be declared **BEFORE** 
+    //            Tocata.play(...) is evalueated.  Otherwise, the offset of the Ptpar will be overwitten.
     *play { arg ...instruments;
         var ptpar = [];
         instruments.do { |instr, i|
             // [i, instr].debug("instrument");
-            instr.class.debug("class");
-            if (instr.class == Array) {
-                ptpar = ptpar ++ instr[0] ++ instr[1].plbindef;
-            } {
-                ptpar = ptpar ++ [0] ++ instr.plbindef;
-            }
+            if (instr.offset.isNil) {instr.offset_(0)};
+            ptpar = ptpar ++ instr.offset ++ instr.plbindef;
         };
 
         ptpar.postln;
