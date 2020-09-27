@@ -129,14 +129,38 @@ Tocata : PLbindef {
 		^sourceEnvirs;
     }
 
+    // Play the given instruments.
+    // \param instruments     PLbindef | Array       Each instrument can be either a PLbindef or
+    //                                               an array of [offset, PLbindef], where offset
+    //                                               is the number of beats before the instrument
+    //                                               starts to play (may be float for off-beat values)
+    // Example: Tocata.play(~acid, [0.5, ~bass]) will play ~acid on the first beat and ~bass on beat 1.5
+    *play { arg ...instruments;
+        var ptpar = [];
+        instruments.do { |instr, i|
+            // [i, instr].debug("instrument");
+            instr.class.debug("class");
+            if (instr.class == Array) {
+                ptpar = ptpar ++ instr[0] ++ instr[1].plbindef;
+            } {
+                ptpar = ptpar ++ [0] ++ instr.plbindef;
+            }
+        };
+
+        ptpar.postln;
+        Pdef(\band, Ptpar(ptpar)).play;
+    }
+
     *stop {
-        currentEnvironment.keysValuesDo {|k,v|
-            v.stop;
-        }
+        Pdef(\band).stop;
     }
 
     *stopAll {
         this.stop;
+    }
+
+    *band {
+        ^Pdef(\band);
     }
 
     controls {
