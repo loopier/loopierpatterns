@@ -31,8 +31,16 @@ Tocata : PLbindef {
         ^Ndef(ndefkey, super.new(key, \type, \sample, \sound, sound, \channels, channels, \n, 0)).stop;
     }
 
-    *midi { arg key, midiout, channel=0;
-        ^super.new(key, \type, \midi, \midiout, midiout, \chan, channel);
+    *midi { arg key, midiout, channel=0, audioinputchannel=0;
+        var ndefkey = (key ++ "proxy").asSymbol;
+        Ndef(ndefkey, {
+            // var sig, env, amp=1, out=0, pan=0;
+            // sig = SoundIn.ar(audioinputchannel!2);
+            // sig = sig * amp;
+            // Out.ar(out, Pan2.ar(sig, pan));
+            SoundIn.ar(audioinputchannel);
+        }).play([0,1]).fadeTime_(3);
+        ^super.new(key, \type, \midi, \midiout, midiout, \chan, channel, \audioinputchannel, audioinputchannel);
     }
 
     *cc { arg key, midiout, channel=0;
@@ -136,7 +144,7 @@ Tocata : PLbindef {
     //                                               starts to play (may be float for off-beat values)
     // Example: Tocata.play(~acid, [0.5, ~bass]) will play ~acid on the first beat and ~bass on beat 1.5
     // Warning!:  For an instrument to keep it's offset while modified outside this function, any
-    //            dynamically created variable that is modified must be declared **BEFORE** 
+    //            dynamically created variable that is modified must be declared **BEFORE**
     //            Tocata.play(...) is evalueated.  Otherwise, the offset of the Ptpar will be overwitten.
     *play { arg ...instruments;
         var ptpar = [];
@@ -250,13 +258,32 @@ Bataca {
         ^(this.name ++ "proxy").asSymbol;
     }
 
+    ndef {
+        ^Ndef(this.proxyname);
+    }
+
     play {
         Ndef(this.proxyname).play;
-        this.playing_(1);
+        this.plbindef.play;
+        // this.playing_(1);
+		// var type = this.plbindef.source.at(\type).source;
+		// if ( type == \midi) {
+		// 	this.plbindef.play;
+		// 	// TODO: !!! Capture audio input to enable filtering and fx
+		// 	//           Maybe with Ndef(this.proxyname, {SoundIn.ar(inputchannel)}) where
+		// 	//           'inputchannel' is an arg to this function
+		// };
+		// Ndef((this.proxyname++"audio").asSymbol, {SoundIn.ar(this.audioinputchannel.debug("audioinput"))}).play;
     }
 
     stop {
-        Ndef(this.proxyname).stop;
+		// var type = this.plbindef.source.at(\type).source;
+		// if ( type == \midi) {
+		// 	this.plbindef.stop;
+		// };
+        // Ndef(this.proxyname).stop;
+        this.plbindef.stop;
+        // this.playing_(0);
     }
 
     fadeTime { arg time;
@@ -271,9 +298,11 @@ Bataca {
     }
 
 	// Set motifs quickly with degree/dur pairs
-	motif { arg motif=(degree: 0, dur: 1);
+	motif { arg motif;
 		motif.debug("motif");
-		this.degree_(motif[\degree].pseq(inf)).dur_(motif[\dur].pseq(inf));
+		if (motif.notes.isNil)  {this.note_(nil)}  { this.note_(Pseq(motif.notes, inf))};
+		if (motif.degrees.isNil){this.degree_(nil)}{ this.degree_(Pseq(motif.degrees, inf))};
+		if (motif.durs.isNil)   {this.dur_(nil)}   { this.dur_(Pseq(motif.durs, inf))};
 	}
 
     fade { arg steps = 10, from = 0.0, to = 0.3;
