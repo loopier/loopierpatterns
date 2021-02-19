@@ -1,19 +1,47 @@
-// usage
-// To use with Ppar:
-// Tocata.synth(\acid, \acid);
-// Tocata.synth(\bass, \fmbass);
-// Pdef(\a, Ptpar([0.5, ~acid.plbindef, 0, ~bass.plbindef])).play
+//
+//	This file is part of LoopierPatterns, a program library for SuperCollider 3
+//
+//	Created: 2019
+//	Copyright (C) 2019 Roger Pibernat
+//	Email:
+//	URL:
+//
+//	This program is free software; you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation; either version 2 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+//  This class uses and extends PLbindef from the wonderful miSCellaneous_lib by Daniel Mayer.
+//  https://github.com/dkmayer/miSCellaneous_lib
 
-Tocata : PLbindef {
-    var <>instrumentName;
+// usage
+// to use with ppar:
+// tocata.synth(\acid, \acid);
+// tocata.synth(\bass, \fmbass);
+// pdef(\a, ptpar([0.5, ~acid.plbindef, 0, ~bass.plbindef])).play
+
+tocata : plbindef {
+    var <>instrumentname;
 
     *instrument { arg key, instrument;
         // this.init(key);
-        var ndefkey = (key ++ "proxy").asSymbol;
+        var ndefkey = (key ++ "proxy").assymbol;
+        var plbindef = super.new(key, \instrument, instrument);
         instrument = instrument ? key;
         instrument.debug("instrument");
         key.debug("key");
-        ^Ndef(ndefkey, super.new(key, \instrument, instrument)).stop;
+        ^ndef(ndefkey, plbindef).stop.fadetime_(3);
+        // ndef(ndefkey, plbindef).stop.fadetime_(3);
+        // ^plbindef.stop.fadetime_(3);
     }
 
     *def { arg ... args;
@@ -25,31 +53,41 @@ Tocata : PLbindef {
     }
 
     *sample{ arg key, sound, channels=2;
-        var ndefkey = (key ++ "proxy").asSymbol;
-        // sound = currentEnvironment[sound] ? currentEnvironment[key];
+        var ndefkey = (key ++ "proxy").assymbol;
+        // sound = currentenvironment[sound] ? currentenvironment[key];
         // this.init(key);
-        ^Ndef(ndefkey, super.new(key, \type, \sample, \sound, sound, \channels, channels, \n, 0)).stop;
+        sound[0].class.postln;
+        sound[0].numchannels.postln;
+        ^ndef(ndefkey, super.new(key, \type, \sample, \sound, sound, \channels, channels, \n, 0)).stop.fadetime_(3);
     }
 
-    *midi { arg key, midiout, channel=0, audioinputchannel=0;
-        var ndefkey = (key ++ "proxy").asSymbol;
-        Ndef(ndefkey, {
+    *midi { arg key, midiout, channel=0;
+        var ndefkey = (key ++ "proxy").assymbol;
+        tocata.cc(key, midiout, channel);
+        ^super.new(key, \type, \midi, \midiout, midiout, \chan, channel);
+    }
+
+    *midiwithaudio { arg key, midiout, channel=0, audioinputchannel=0;
+        var ndefkey = (key ++ "proxy").assymbol;
+        ndef(ndefkey, {
             // var sig, env, amp=1, out=0, pan=0;
-            // sig = SoundIn.ar(audioinputchannel!2);
+            // sig = soundin.ar(audioinputchannel!2);
             // sig = sig * amp;
-            // Out.ar(out, Pan2.ar(sig, pan));
-            SoundIn.ar(audioinputchannel);
-        }).play([0,1]).fadeTime_(3);
+            // out.ar(out, pan2.ar(sig, pan));
+            soundin.ar(audioinputchannel);
+        }).play([0,1]).fadetime_(3).quant_(1);
+        tocata.cc(key, midiout, channel);
         ^super.new(key, \type, \midi, \midiout, midiout, \chan, channel, \audioinputchannel, audioinputchannel);
     }
 
+
     *cc { arg key, midiout, channel=0;
-        ^super.new(key, \type, \midi, \midiout, midiout, \chan, channel, \midicmd, \control, \ctrNum, 0, \control, 64);
+        ^super.new((key++"cc").assymbol, \type, \midi, \midiout, midiout, \chan, channel, \midicmd, \control);
     }
 
     // use tocata as superdirt
     *dirt { arg key, sound;
-        SuperDirt.default = ~dirt;
+        superdirt.default = ~dirt;
         ^super.new(key, \type, \dirt, \s, sound, \n, 0);
     }
 
@@ -58,31 +96,31 @@ Tocata : PLbindef {
     }
 
     // provides a harmonic progression with independent timing
-    *harmony { arg degrees = [0,4], durs = [4], quant = Quant(4);
-        if (Pdef(\harmony).isPlaying) {"Harmony pattern already playing"}{ Pdef(\harmony).play(quant: quant) };
-        if (degrees.isArray) { degrees = Pseq(degrees, inf); };
-        if (durs.isArray) { durs = Pseq(durs, inf); };
-        Pdef(\harmony,
-            Pbind(
+    *harmony { arg degrees = [0,4], durs = [4], quant = quant(4);
+        if (pdef(\harmony).isplaying) {"harmony pattern already playing"}{ pdef(\harmony).play(quant: quant) };
+        if (degrees.isarray) { degrees = pseq(degrees, inf); };
+        if (durs.isarray) { durs = pseq(durs, inf); };
+        pdef(\harmony,
+            pbind(
                 \amp, 0,
                 \degree, degrees,
                 \dur, durs,
-            ).collect({|event| ~lastHarmonyEvent = event;})
+            ).collect({|event| ~lastharmonyevent = event;})
         );
         //  to play a pbind with harmony add '+ ~harmony' to \degree.
-        ~harmony = Pfunc { ~lastHarmonyEvent[\degree] };
+        ~harmony = pfunc { ~lastharmonyevent[\degree] };
     }
 
     // list all available synths
-    *synths { arg loadStoredSynths = true;
-        var names = SortedList.new;
-        if(loadStoredSynths) {
-            SynthDescLib.read;
+    *synths { arg loadstoredsynths = true;
+        var names = sortedlist.new;
+        if(loadstoredsynths) {
+            synthdesclib.read;
         };
-        SynthDescLib.global.synthDescs.do { |desc|
-            if(desc.def.notNil) {
-                // Skip names that start with "system_"
-                if ("^[^system_|^pbindFx_]".matchRegexp(desc.name)
+        synthdesclib.global.synthdescs.do { |desc|
+            if(desc.def.notnil) {
+                // skip names that start with "system_"
+                if ("^[^system_|^pbindfx_]".matchregexp(desc.name)
             ) {
                 names.add(desc.name);
             };
@@ -93,99 +131,99 @@ Tocata : PLbindef {
     ^names;
         }
 
-        *loadSamples { arg paths = [], s = Server.default;
-        var d = Dictionary.new;
+        *loadsamples { arg paths = [], s = server.default;
+        var d = dictionary.new;
         paths.do { |path|
-            var name  = PathName(path).folderName;
-            d.add(name -> Loopier.loadSamplesArray(path, s));
+            var name  = pathname(path).foldername;
+            d.add(name -> loopier.loadsamplesarray(path, s));
         };
-        // Loopier.listSamples(d);
+        // loopier.listsamples(d);
         ^d;
     }
 
     *controls { arg synth;
-        var controls = List();
+        var controls = list();
         "% controls: ".format(synth).postln;
-        SynthDescLib.global.at(synth).controls.do{ |ctl|
-            controls.add([ctl.name, ctl.defaultValue]);
+        synthdesclib.global.at(synth).controls.do{ |ctl|
+            controls.add([ctl.name, ctl.defaultvalue]);
         };
         controls.collect(_.postln);
     }
 
     // lists available instruments (variables)
     *list {
-        // currentEnvironment.keys.asArray.sort.collect(_.postln);
-        currentEnvironment.keys.asArray.sort.do{|k|
-            "% (%)".format(k, currentEnvironment[k].size).postln;
+        // currentenvironment.keys.asarray.sort.collect(_.postln);
+        currentenvironment.keys.asarray.sort.do{|k|
+            "% (%)".format(k, currentenvironment[k].size).postln;
         }
     }
 
     *samples {
-        Tocata.list;
+        tocata.list;
     }
 
     *instruments {
-		// Tocata.list;
-		^Tocata.allInstruments;
+		// tocata.list;
+		^tocata.allinstruments;
 	}
 
-	*allInstruments {
-		var sourceEnvirs = List();
+	*allinstruments {
+		var sourceenvirs = list();
         super.all.do{|x|
-			sourceEnvirs.add(x.sourceEnvir);
+			sourceenvirs.add(x.sourceenvir);
 		};
-		^sourceEnvirs;
+		^sourceenvirs;
     }
 
-    // Play the given instruments.
-    // \param instruments     PLbindef | Array       Each instrument can be either a PLbindef or
-    //                                               an array of [offset, PLbindef], where offset
+    // play the given instruments.
+    // \param instruments     plbindef | array       each instrument can be either a plbindef or
+    //                                               an array of [offset, plbindef], where offset
     //                                               is the number of beats before the instrument
     //                                               starts to play (may be float for off-beat values)
-    // Example: Tocata.play(~acid, [0.5, ~bass]) will play ~acid on the first beat and ~bass on beat 1.5
-    // Warning!:  For an instrument to keep it's offset while modified outside this function, any
-    //            dynamically created variable that is modified must be declared **BEFORE**
-    //            Tocata.play(...) is evalueated.  Otherwise, the offset of the Ptpar will be overwitten.
+    // example: tocata.play(~acid, [0.5, ~bass]) will play ~acid on the first beat and ~bass on beat 1.5
+    // warning!:  for an instrument to keep it's offset while modified outside this function, any
+    //            dynamically created variable that is modified must be declared **before**
+    //            tocata.play(...) is evalueated.  otherwise, the offset of the ptpar will be overwitten.
     *play { arg ...instruments;
         var ptpar = [];
         instruments.do { |instr, i|
             // [i, instr].debug("instrument");
-            if (instr.offset.isNil) {instr.offset_(0)};
+            if (instr.offset.isnil) {instr.offset_(0)};
             ptpar = ptpar ++ instr.offset ++ instr.plbindef;
         };
 
         ptpar.postln;
-        Pdef(\band, Ptpar(ptpar)).play;
+        pdef(\band, ptpar(ptpar)).play;
     }
 
     *stop {
-        Pdef(\band).stop;
+        pdef(\band).stop;
     }
 
-    *stopAll {
+    *stopall {
         this.stop;
     }
 
     *band {
-        ^Pdef(\band);
+        ^pdef(\band);
     }
 
     controls {
-        var controls = List();
-        "% controls: ".format(instrumentName).postln;
-        SynthDescLib.global.at(this.instrumentName).controls.do{ |ctl|
-            controls.add([ctl.name, ctl.defaultValue]);
+        var controls = list();
+        "% controls: ".format(instrumentname).postln;
+        synthdesclib.global.at(this.instrumentname).controls.do{ |ctl|
+            controls.add([ctl.name, ctl.defaultvalue]);
         };
         controls.collect(_.postln);
     }
 
 }
 
-// A class that assigns a Tocata to each track of a Drum Machine
+// a class that assigns a tocata to each track of a drum machine
 // usage
-// ~bataca = Bataca(kick: Tocata.sample(\kick, ~avlkick), ...);
-// ~bataca.pattern(DrumPattern.tinyhouse);
-Bataca {
+// ~bataca = bataca(kick: tocata.sample(\kick, ~avlkick), ...);
+// ~bataca.pattern(drumpattern.tinyhouse);
+bataca {
     var <>sounds;
     var <>drumpattern;
 
@@ -204,13 +242,31 @@ Bataca {
             \mt: mt,
             \lt: lt,
         );
-        ^super.newCopyArgs(sounds);
+        ^super.newcopyargs(sounds);
+    }
+
+    *from { arg kick=nil, sn=nil, ch=nil, oh=nil, rim=nil, cym=nil, bell=nil, cl=nil, sh=nil, ht=nil, mt=nil, lt=nil;
+        var sounds = (
+            \kick: tocata.sample(\kick, kick),
+            \sn: tocata.sample(\sn,sn),
+            \ch: tocata.sample(\ch,ch),
+            \oh: tocata.sample(\oh,oh),
+            \rim: tocata.sample(\rim,rim),
+            \cym: tocata.sample(\cym,cym),
+            \bell:  tocata.sample(\bell,bell),
+            \cl: tocata.sample(\cl,cl),
+            \sh: tocata.sample(\sh,sh),
+            \ht: tocata.sample(\ht,ht),
+            \mt: tocata.sample(\mt,mt),
+            \lt: tocata.sample(\lt,lt)
+        );
+        ^super.newcopyargs(sounds);
     }
 
 	play { arg quant = 4;
-        // plays the Ndef
+        // plays the ndef
         sounds.do{|it|
-			var tocata = currentEnvironment[it.source.key];
+			var tocata = currentenvironment[it.source.key];
 			tocata.dur_(1/4);
 			// tocata.legato_(4);
 			it.play.quant_(quant);
@@ -218,9 +274,9 @@ Bataca {
     }
 
 	stop {
-        // stops the Tocata inside the Ndef (see Tocata.stop
-        // -- actually PLbinefEnvironment.stop overriding)
-        // It's done like this because if we stop the Ndef all
+        // stops the tocata inside the ndef (see tocata.stop
+        // -- actually plbinefenvironment.stop overriding)
+        // it's done like this because if we stop the ndef all
         // effects will be stopped immediately and we want them
         // to keep going until they are done (e.g. reverb)
         sounds.do{|it|
@@ -232,7 +288,7 @@ Bataca {
         this.drumpattern = pattern;
 		sounds.do{|it|
 			var instrument = it.source.key;
-			var tocata = currentEnvironment[instrument];
+			var tocata = currentenvironment[instrument];
             // it.key.debug("it");
             // instrument.debug("instrument");
             // tocata.key.debug("tocata");
@@ -247,33 +303,34 @@ Bataca {
     }
 
     all {
-        var players = List.new;
-        sounds.do{|sound| players.add(currentEnvironment[sound.source.key])};
+        var players = list.new;
+        sounds.do{|sound| players.add(currentenvironment[sound.source.key])};
         ^players;
     }
 }
 
-+ PLbindefEnvironment {
++ plbindefenvironment {
     proxyname {
-        ^(this.name ++ "proxy").asSymbol;
+        ^(this.name ++ "proxy").assymbol;
     }
 
     ndef {
-        ^Ndef(this.proxyname);
+        ^ndef(this.proxyname);
     }
 
     play {
-        Ndef(this.proxyname).play;
-        this.plbindef.play;
+        ndef(this.proxyname).play;
+        // this.plbindef.play;
+
         // this.playing_(1);
 		// var type = this.plbindef.source.at(\type).source;
 		// if ( type == \midi) {
 		// 	this.plbindef.play;
-		// 	// TODO: !!! Capture audio input to enable filtering and fx
-		// 	//           Maybe with Ndef(this.proxyname, {SoundIn.ar(inputchannel)}) where
+		// 	// todo: !!! capture audio input to enable filtering and fx
+		// 	//           maybe with ndef(this.proxyname, {soundin.ar(inputchannel)}) where
 		// 	//           'inputchannel' is an arg to this function
 		// };
-		// Ndef((this.proxyname++"audio").asSymbol, {SoundIn.ar(this.audioinputchannel.debug("audioinput"))}).play;
+		// ndef((this.proxyname++"audio").assymbol, {soundin.ar(this.audioinputchannel.debug("audioinput"))}).play;
     }
 
     stop {
@@ -281,35 +338,39 @@ Bataca {
 		// if ( type == \midi) {
 		// 	this.plbindef.stop;
 		// };
-        // Ndef(this.proxyname).stop;
-        this.plbindef.stop;
+        ndef(this.proxyname).stop;
+        // this.plbindef.stop;
         // this.playing_(0);
     }
 
-    fadeTime { arg time;
-        Ndef(this.proxyname).fadeTime_(time);
+    cc { arg num=0, value=60;
+        ^plbindef((this.name++"cc").assymbol, \midicmd, \control, \ctrnum, num, \control, value.linlin(0.0,1.0,0,127)).play;
+    }
+
+    fadetime { arg time;
+        ndef(this.proxyname).fadetime_(time);
     }
 
 
     controls {
         this.name.debug("tocata");
         this.instrument.debug("instrument");
-        Tocata.controls(this.instrument);
+        tocata.controls(this.instrument);
     }
 
-	// Set motifs quickly with degree/dur pairs
+	// set motifs quickly with degree/dur pairs
 	motif { arg motif;
 		motif.debug("motif");
-		if (motif.notes.isNil)  {this.note_(nil)}  { this.note_(Pseq(motif.notes, inf))};
-		if (motif.degrees.isNil){this.degree_(nil)}{ this.degree_(Pseq(motif.degrees, inf))};
-		if (motif.durs.isNil)   {this.dur_(nil)}   { this.dur_(Pseq(motif.durs, inf))};
+		if (motif.notes.isnil)  {this.note_(nil)}  { this.note_(pseq(motif.notes, inf))};
+		if (motif.degrees.isnil){this.degree_(nil)}{ this.degree_(pseq(motif.degrees, inf))};
+		if (motif.durs.isnil)   {this.dur_(nil)}   { this.dur_(pseq(motif.durs, inf))};
 	}
 
     fade { arg steps = 10, from = 0.0, to = 0.3;
-        var list = Array.interpolation(steps, from, to);
+        var list = array.interpolation(steps, from, to);
 		var last = list[list.size - 1];
         list.debug("fade");
-		this.amp_(Pseq([Pseq(list), Pseq([last], inf)]));
+		this.amp_(pseq([pseq(list), pseq([last], inf)]));
     }
 
     fadein { arg steps = 10, to = 0.3;
@@ -320,35 +381,35 @@ Bataca {
         this.fade(steps, from, 0.0);
     }
 
-    // Creates an effect with patternable parameters
-    // This is an abstraction that allows for specific fx and filter codes below to
+    // creates an effect with patternable parameters
+    // this is an abstraction that allows for specific fx and filter codes below to
     // be shorter and cleaner.
-    // \param    index    Number    Index of the slot in the Ndef \param    function Function  Filter function
-    // \param    args     Array     Pbind pairs.  If first argument is <= the effect is cancelled
+    // \param    index    number    index of the slot in the ndef \param    function function  filter function
+    // \param    args     array     pbind pairs.  if first argument is <= the effect is cancelled
     //
-    // Can have an independent duration passed in 'args' with [dur: Pseq([1,2],inf)]
-    addFx { arg index, function, args;
-        var proxy = Ndef(this.proxyname);
+    // can have an independent duration passed in 'args' with [dur: pseq([1,2],inf)]
+    addfx { arg index, function, args;
+        var proxy = ndef(this.proxyname);
         var first = args[1];
         index.debug("index");
         function.debug("func");
         args.debug("args");
         first.debug("first");
-        // one-liner breaks the code: if (first.isNumber && first <= 0)
-        if (first.isNumber) {
-            first.isNumber.debug("first is number");
+        // one-liner breaks the code: if (first.isnumber && first <= 0)
+        if (first.isnumber) {
+            first.isnumber.debug("first is number");
             if (first <= 0) {
                 proxy[index] = nil;
                 proxy[index * 10] = nil;
             } {
-                proxy[index] = \pset -> Pbind(*args);
+                proxy[index] = \pset -> pbind(*args);
                 proxy[index * 10] = \filter -> function;
             };
         } {
-            if (first.isFunction) {
+            if (first.isfunction) {
                 proxy[index] = \pset -> first;
             } {
-                proxy[index] = \pset -> Pbind(*args);
+                proxy[index] = \pset -> pbind(*args);
             };
             proxy[index * 10] = \filter -> function;
         };
@@ -360,64 +421,64 @@ Bataca {
                      var delaytime = \time.kr(0.2);
                      var fb = \feedback.kr(0.5);
                      var local, del;
-                     local = LocalIn.ar(2) + in;
-                     del = DelayN.ar(
+                     local = localin.ar(2) + in;
+                     del = delayn.ar(
                          local,
                          maxdelaytime: maxdelaytime,
                          delaytime: delaytime,
                          mul: fb
                      );
-                     LocalOut.ar(del);
-                     // SelectX.ar(time, [in, in + del]);
+                     localout.ar(del);
+                     // selectx.ar(time, [in, in + del]);
                      in + del;
                  };
 
-        this.addFx(index: 1, function: filterfunc, args: [time:time, feedback: feedback, dur: dur]);
+        this.addfx(index: 1, function: filterfunc, args: [time:time, feedback: feedback, dur: dur]);
     }
 
     gverb { arg room = 0.3, size = 0.03, dur = 1;
         var filterfunc = {|in|
             var roomsize = \size.kr(0.03).linlin(0.0, 1.0, 1, 300);
             var mul = \room.kr(0.3);
-            in + GVerb.ar(in, roomsize: roomsize, mul: mul);
+            in + gverb.ar(in, roomsize: roomsize, mul: mul);
         };
-        this.addFx(index: 2, function: filterfunc, args: [room:room, size: size, dur: dur]);
+        this.addfx(index: 2, function: filterfunc, args: [room:room, size: size, dur: dur]);
     }
 
     freeverb { arg mix = 0.33, room = 0.5, dur = 1;
         var filterfunc = {|in|
             var roomsize = \room.kr(0.5);
             var mix = \mix.kr(0.33);
-            FreeVerb.ar(in, mix: mix, room: roomsize);
+            freeverb.ar(in, mix: mix, room: roomsize);
         };
-        this.addFx(index: 3, function: filterfunc, args: [mix:mix, room: room, dur: dur]);
+        this.addfx(index: 3, function: filterfunc, args: [mix:mix, room: room, dur: dur]);
     }
 
     lpf { arg cutoff = 440, rq = 0.2, dur = 1;
                 var filterfunc =  {|in|
                     var freq = \cutoff.kr(440);
                     var resonance = \rq.kr(0.2);
-                    RLPF.ar(in, freq: freq, rq: resonance);
+                    rlpf.ar(in, freq: freq, rq: resonance);
                 };
-        this.addFx(index: 4, function: filterfunc, args: [cutoff:cutoff, rq: rq, dur: dur]);
+        this.addfx(index: 4, function: filterfunc, args: [cutoff:cutoff, rq: rq, dur: dur]);
     }
 
     hpf { arg cutoff = 440, rq = 0.2, dur = 1;
         var filterfunc =  {|in|
             var freq = \cutoff.kr(440);
             var resonance = \rq.kr(0.2);
-            RHPF.ar(in, freq: freq, rq: resonance);
+            rhpf.ar(in, freq: freq, rq: resonance);
         };
-        this.addFx(index: 4, function: filterfunc, args: [cutoff:cutoff, rq: rq, dur: dur]);
+        this.addfx(index: 4, function: filterfunc, args: [cutoff:cutoff, rq: rq, dur: dur]);
     }
 
     bpf { arg cutoff = 440, rq = 0.2, dur = 1;
         var filterfunc =  {|in|
             var freq = \cutoff.kr(440);
             var resonance = \rq.kr(0.2);
-            RHPF.ar(in, freq: freq, rq: resonance);
+            rhpf.ar(in, freq: freq, rq: resonance);
         };
-        this.addFx(index: 4, function: filterfunc, args: [cutoff:cutoff, rq: rq, dur: dur]);
+        this.addfx(index: 4, function: filterfunc, args: [cutoff:cutoff, rq: rq, dur: dur]);
     }
 
     distort { arg distort = 0.3, dur = 1;
@@ -425,19 +486,19 @@ Bataca {
                     var dist = \distortion.kr(0.3);
                     var signal, mod;
                     signal = in;
-                    mod = CrossoverDistortion.ar(signal, amp: 0.2, smooth: 0.01);
-                    mod = mod + (0.1 * dist * DynKlank.ar(`[[60,61,240,3000 + SinOsc.ar(62,mul: 100)],nil,[0.1, 0.1, 0.05, 0.01]], signal));
+                    mod = crossoverdistortion.ar(signal, amp: 0.2, smooth: 0.01);
+                    mod = mod + (0.1 * dist * dynklank.ar(`[[60,61,240,3000 + sinosc.ar(62,mul: 100)],nil,[0.1, 0.1, 0.05, 0.01]], signal));
                     mod = (mod.cubed * 8).softclip * 0.5;
-                    mod = SelectX.ar(dist, [signal, mod]);
+                    mod = selectx.ar(dist, [signal, mod]);
                 };
-        this.addFx(index: 4, function: filterfunc, args: [distort: distort, dur: dur]);
+        this.addfx(index: 4, function: filterfunc, args: [distort: distort, dur: dur]);
     }
 
-    // add filters like you would do with Ndef:
-    // Ndef(\a)[x] = \filter -> { ... }
+    // add filters like you would do with ndef:
+    // ndef(\a)[x] = \filter -> { ... }
     fx1 { arg func;
-        var proxy = Ndef(this.proxyname);
-        if (func.isNil) {
+        var proxy = ndef(this.proxyname);
+        if (func.isnil) {
             proxy[100] = nil
         }{
             proxy[100] = \filter -> func;
@@ -445,8 +506,8 @@ Bataca {
     }
 
     fx2 { arg func;
-        var proxy = Ndef(this.proxyname);
-        if (func.isNil) {
+        var proxy = ndef(this.proxyname);
+        if (func.isnil) {
             proxy[200] = nil
         }{
             proxy[200] = \filter -> func;
@@ -454,8 +515,8 @@ Bataca {
     }
 
     fx3 { arg func;
-        var proxy = Ndef(this.proxyname);
-        if (func.isNil) {
+        var proxy = ndef(this.proxyname);
+        if (func.isnil) {
             proxy[300] = nil
         }{
             proxy[300] = \filter -> func;

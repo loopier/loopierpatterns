@@ -1,4 +1,12 @@
 + Array {
+    concat {
+        var prev = [];
+        this.do{|n|
+            prev = prev ++ n;
+        }
+        ^prev;
+    }
+
     pseq { arg repeats=1, offset=0;
         ^Pseq(this, repeats, offset);
     }
