@@ -268,7 +268,8 @@ Bataca {
             // instrument.debug("instrument");
             // tocata.key.debug("tocata");
             pattern.debug("pattern:");
-            tocata.rhythm_(this.drumpattern.at(instrument).pseq(inf))
+            // tocata.rhythm_(this.drumpattern.at(instrument).pseq(inf))
+            tocata.r_(this.drumpattern.at(instrument).pseq(inf))
 		}
         ^this.drumpattern;
     }
