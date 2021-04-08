@@ -220,23 +220,55 @@ Bataca {
     var <>sounds;
     var <>drumpattern;
 
-    *new { arg kick, sn, ch, oh, rim, cym, bell, cl, sh, ht, mt, lt;
+    // *new { arg kick, sn, ch, oh, rim, cym, bell, cl, sh, ht, mt, lt;
+    //     var sounds = (
+    //         \kick: kick,
+    //         \sn: sn,
+    //         \ch: ch,
+    //         \oh: oh,
+    //         \rim: rim,
+    //         \cym: cym,
+    //         \bell: bell,
+    //         \cl: cl,
+    //         \sh: sh,
+    //         \ht: ht,
+    //         \mt: mt,
+    //         \lt: lt,
+    //     );
+    //     ^super.newCopyArgs(sounds);
+    // }
+
+    //
+    *new { arg
+        kick=nil, kickchannels=1,
+        sn=nil, snchannels=1,
+        ch=nil, chchannels=1,
+        oh=nil, ohchannels=1,
+        rim=nil, rimchannels=1,
+        cym=nil, cymchannels=1,
+        bell=nil, bellchannels=1,
+        cl=nil, clchannels=1,
+        sh=nil, shchannels=1,
+        ht=nil, htchannels=1,
+        mt=nil, mtchannels=1,
+        lt=nil, ltchannels=1;
         var sounds = (
-            \kick: kick,
-            \sn: sn,
-            \ch: ch,
-            \oh: oh,
-            \rim: rim,
-            \cym: cym,
-            \bell: bell,
-            \cl: cl,
-            \sh: sh,
-            \ht: ht,
-            \mt: mt,
-            \lt: lt,
+            \kick: Tocata.sample(\kick, kick, kickchannels),
+            \sn: Tocata.sample(\sn, sn, snchannels),
+            \ch: Tocata.sample(\ch, ch, chchannels),
+            \oh: Tocata.sample(\oh, oh, ohchannels),
+            \rim: Tocata.sample(\rim, rim, rimchannels),
+            \cym: Tocata.sample(\cym, cym, cymchannels),
+            \bell: Tocata.sample(\bell, bell, bellchannels),
+            \cl: Tocata.sample(\cl, cl, clchannels),
+            \sh: Tocata.sample(\sh, sh, shchannels),
+            \ht: Tocata.sample(\ht, ht, htchannels),
+            \mt: Tocata.sample(\mt, mt, mtchannels),
+            \lt: Tocata.sample(\lt, lt, ltchannels),
         );
         ^super.newCopyArgs(sounds);
     }
+
 
 	play { arg quant = 4;
         // plays the Ndef
