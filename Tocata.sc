@@ -214,13 +214,13 @@ Tocata : PLbindef {
 
 // A class that assigns a Tocata to each track of a Drum Machine
 // usage
-// ~bataca = Bataca(kick: Tocata.sample(\kick, ~avlkick), ...);
 // ~bataca.pattern(DrumPattern.tinyhouse);
 Bataca {
     var <>sounds;
     var <>drumpattern;
 
     // *new { arg kick, sn, ch, oh, rim, cym, bell, cl, sh, ht, mt, lt;
+    // // ~bataca = Bataca(kick: Tocata.sample(\kick, ~avlkick), ...);
     //     var sounds = (
     //         \kick: kick,
     //         \sn: sn,
