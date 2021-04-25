@@ -7,7 +7,12 @@
         ^prev;
     }
 
-    pseq { arg repeats=1, offset=0;
+    // walk { arg size, list, stepPattern, directionPattern=1, startPos=0;
+    //     // ^Array.fill(size, list.pwalk(stepPattern, directionPattern, startPos).iter);
+    //     [size, list, stepPattern, directionPattern, startPos].collect(_.debug(_));
+    // }
+
+    pseq { arg repeats=inf, offset=0;
         ^Pseq(this, repeats, offset);
     }
 
@@ -23,11 +28,11 @@
         ^Pshuf(this, repeats);
     }
 
-    prand { arg repeats=1;
+    prand { arg repeats=inf;
         ^Prand(this, repeats);
     }
 
-    pxrand { arg repeats=1;
+    pxrand { arg repeats=inf;
         ^Pxrand(this, repeats);
     }
 
