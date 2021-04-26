@@ -7,6 +7,20 @@
         ^prev;
     }
 
+    // returns an array of variations of the given array following
+    // the algorithm used to compose sextines in poetry.
+    sextine {
+        var sextine = List();
+        var arr = this;
+        sextine.add(arr);
+        arr.size.do{
+            var mid = (arr.size / 2).asInteger;
+            arr = [arr[mid..].reverse, arr[..mid]].lace(arr.size);
+            sextine.add(arr);
+        };
+        ^sextine.asArray;
+    }
+
     // walk { arg size, list, stepPattern, directionPattern=1, startPos=0;
     //     // ^Array.fill(size, list.pwalk(stepPattern, directionPattern, startPos).iter);
     //     [size, list, stepPattern, directionPattern, startPos].collect(_.debug(_));
