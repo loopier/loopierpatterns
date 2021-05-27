@@ -74,7 +74,7 @@
         ^Ptuple(this, repeats);
     }
 
-    place { arg repeats=1, offset=0;
+    place { arg repeats=inf, offset=0;
         ^Place(this, repeats, offset);
     }
 
