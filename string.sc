@@ -1,4 +1,8 @@
 + String {
+	asDegrees {
+		^this.digit.collect(_ ? \r); // replace nil by \r
+	}
+
 	pixi { arg repeats=1;
 		^Pixi(this, repeats);
 	}
