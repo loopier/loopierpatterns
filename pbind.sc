@@ -1,26 +1,26 @@
 +Pbind {
-  find { arg key;
-    patternpairs.pairsDo { |u,x,i|
-      if(u == key) { ^i }
-    };
-    ^nil
-  }
+	find { arg key;
+		patternpairs.pairsDo { |u,x,i|
+			if(u == key) { ^i }
+		};
+		^nil
+	}
 
-  set { arg ...args;
-    args.pairsDo { |key, val|
-      var i = this.find(key);
-      if (i.notNil) {
-        if (val.isNil) {
-          patternpairs.removeAt(i);
-          patternpairs.removeAt(i);
-        } {
-          patternpairs[i+1] = val
-        }
-      }{
-        patternpairs = patternpairs ++ [key, val];
-      }
-    }
-  }
+	set { arg ...args;
+		args.pairsDo { |key, val|
+			var i = this.find(key);
+			if (i.notNil) {
+				if (val.isNil) {
+					patternpairs.removeAt(i);
+					patternpairs.removeAt(i);
+				} {
+					patternpairs[i+1] = val
+				}
+			}{
+				patternpairs = patternpairs ++ [key, val];
+			}
+		}
+	}
 
 	// map all methods that are not understood to a Pbind parameter
 	doesNotUnderstand { |selector ...args|
