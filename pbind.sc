@@ -1,7 +1,6 @@
 +Pbind {
 	set { |...pairs|
 		var newpairs;
-		if (pairs.size.odd, { Error("Pbind should have even number of args.\n").throw; });
 		newpairs = merge(
 			pairs.asDict,
 			this.patternpairs.asDict,
@@ -10,8 +9,11 @@
 		^Pbind(*newpairs);
 	}
 
-	dur { |val| ^this.set(\dur, val) }
-	doesNotUnderstand { |selector ...args| ^this.set(selector, args[0]) }
+	// map all methods that are not understood to a Pbind parameter
+	doesNotUnderstand { |selector ...args|
+		selector.debug("Pbind doesNotUnderstand");
+		^this.set(selector, args[0]);
+	}
 
 	fastest { ^this.set(\dur, 1/8) }
 	faster { ^this.set(\dur, 1/4) }
