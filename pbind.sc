@@ -1,19 +1,34 @@
 +Pbind {
-	set { |...pairs|
-		var newpairs;
-		newpairs = merge(
-			pairs.asDict,
-			this.patternpairs.asDict,
-			{|new, old| new ? old}
-		).asPairs;
-		^Pbind(*newpairs);
-	}
+  find { arg key;
+    patternpairs.pairsDo { |u,x,i|
+      if(u == key) { ^i }
+    };
+    ^nil
+  }
+
+  set { arg ...args;
+    args.pairsDo { |key, val|
+      var i = this.find(key);
+      if (i.notNil) {
+        if (val.isNil) {
+          patternpairs.removeAt(i);
+          patternpairs.removeAt(i);
+        } {
+          patternpairs[i+1] = val
+        }
+      }{
+        patternpairs = patternpairs ++ [key, val];
+      }
+    }
+  }
 
 	// map all methods that are not understood to a Pbind parameter
 	doesNotUnderstand { |selector ...args|
 		selector.debug("Pbind doesNotUnderstand");
 		^this.set(selector, args[0]);
 	}
+
+	deg { |value| ^this.set(\degree, value) }
 
 	fastest { ^this.set(\dur, 1/8) }
 	faster { ^this.set(\dur, 1/4) }
@@ -45,7 +60,7 @@
 	}
 
 	pedal { ^this.set(\legato, 4) }
-	legato { ^this.set(\legato, 1) }
+	leg { ^this.set(\legato, 1) }
 	pizz { ^this.set(\legato, 0.5) }
 	stacc { ^this.set(\legato, 0.1) }
 }
